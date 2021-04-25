@@ -1,0 +1,18 @@
+{
+    "name": "oleaass/laravel-sluggable",
+    "description": "Add unique slugs to Eloquent models in Laravel",
+    "type": "laravel-package",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ole Aass",
+            "email": "aass.ole@gmail.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "OleAass\\Sluggable\\": "src/"
+        }
+    }
+}
