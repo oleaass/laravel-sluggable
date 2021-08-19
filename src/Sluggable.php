@@ -2,7 +2,10 @@
 
 namespace OleAass\Sluggable;
 
+use DomainException;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 trait Sluggable
@@ -67,7 +70,11 @@ trait Sluggable
 
     public function ensureUniqueSlug(string $slug) : string
     {
-        $list = static::whereRaw("{$this->slugOptions['dest']} REGEXP '^{$slug}(-[0-9]+)?$'")->get();
+        if (!$this->slugExists($slug)) {
+            return $slug;
+        }
+
+        $list = static::whereRaw("{$this->slugOptions['dest']} LIKE '{$slug}%'")->get();
 
         if (!$list->count()) {
             return $slug;
@@ -75,8 +82,14 @@ trait Sluggable
 
         $i = 2;
 
-        if ($list->count() > 1) {
-            $lastSlug = $list->last()->{$this->slugOptions['dest']};
+        $filtered = $list->filter(function ($item) use ($slug) {
+            if (preg_match("/^{$slug}(-[0-9]+)?$/", $item->{$this->slugOptions['dest']})) {
+                return $item;
+            }
+        });
+
+        if ($filtered->count() > 1) {
+            $lastSlug = $filtered->last()->{$this->slugOptions['dest']};
             $slugParts = explode($this->slugOptions['delimiter'], $lastSlug);
             $i = (int) array_pop($slugParts);
             ++$i;
@@ -93,5 +106,41 @@ trait Sluggable
     protected function setSlugOptions() : void
     {
         $this->slugOptions = array_merge($this->slugOptions, $this->getSlugOptions());
+        if (!$this->verifySlugOptions()) {
+            throw new Exception('Failed to verify slug options');
+        }
+    }
+
+    protected function verifySlugOptions(): bool
+    {
+        [
+            'source' => $source,
+            'dest' => $dest,
+            'onCreate' => $onCreate,
+            'onUpdate' => $onUpdate,
+            'allowOverwrite' => $allowOverwrite,
+            'allowDuplicate' => $allowDuplicate,
+            'delimiter' => $delimiter
+        ] = $this->slugOptions;
+
+        if (!is_string($source)) {
+            throw new DomainException('Source value must be of type string');
+        }
+
+        if (!is_string($dest)) {
+            throw new DomainException('Dest value must be of type string');
+        }
+
+        $columns = Schema::getColumnListing((new static)->getTable());
+
+        if (!in_array($source, $columns)) {
+            return false;
+        }
+
+        if (!in_array($dest, $columns)) {
+            return false;
+        }
+
+        return true;
     }
 }
