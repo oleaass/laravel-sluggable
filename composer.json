@@ -9,10 +9,14 @@
             "email": "aass.ole@gmail.com"
         }
     ],
-    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "orchestra/testbench": "^6.20"
+    },
     "autoload": {
         "psr-4": {
-            "OleAass\\Sluggable\\": "src/"
+            "OleAass\\Sluggable\\": "src/",
+            "OleAass\\Sluggable\\Tests\\": "tests/"
         }
     }
 }
