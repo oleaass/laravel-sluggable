@@ -54,6 +54,12 @@ trait Sluggable
             return;
         }
 
+        $currentValue = $this->{$this->slugOptions['source']};
+
+        if (Str::slug($currentValue, $this->slugOptions['delimiter']) == $currentSlug) {
+            return;
+        }
+
         $this->setSlug();
     }
 
